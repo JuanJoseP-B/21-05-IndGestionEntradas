@@ -1,0 +1,158 @@
+{% extends 'base.html' %}
+
+{% block title %}Crear Cuenta - PASSORANGE{% endblock %}
+
+{% block content %}
+<div class="form-container" style="max-width: 550px;">
+    <div class="glass-card" style="padding: 40px;">
+        <div style="text-align: center; margin-bottom: 32px;">
+            <i class="fa-solid fa-user-plus" style="font-size: 40px; color: var(--accent-orange); margin-bottom: 12px;"></i>
+            <h2 style="font-size: 28px; font-weight: 700; margin-bottom: 6px;">Crea tu Cuenta</h2>
+            <p style="color: var(--text-secondary); font-size: 14px;">Únete a PASSORANGE para comprar boletos o crear tus propios espectáculos.</p>
+        </div>
+
+        <form method="post" action="{% url 'register' %}" id="registerForm">
+            {% csrf_token %}
+
+            <div class="form-group">
+                <label class="form-label" for="username">Nombre de Usuario</label>
+                <div style="position: relative;">
+                    <input type="text" name="username" id="username" required class="form-control" placeholder="Ej: juan_perez" style="padding-left: 48px;">
+                    <i class="fa-solid fa-user" style="position: absolute; left: 18px; top: 50%; transform: translateY(-50%); color: var(--text-secondary);"></i>
+                </div>
+                <div id="username-feedback" class="feedback-text"></div>
+            </div>
+
+            <div style="display: flex; gap: 16px; flex-wrap: wrap;">
+                <div class="form-group" style="flex: 1; min-width: 200px;">
+                    <label class="form-label" for="first_name">Nombre</label>
+                    <input type="text" name="first_name" id="first_name" required class="form-control" placeholder="Juan">
+                </div>
+                <div class="form-group" style="flex: 1; min-width: 200px;">
+                    <label class="form-label" for="last_name">Apellido</label>
+                    <input type="text" name="last_name" id="last_name" required class="form-control" placeholder="Pérez">
+                </div>
+            </div>
+
+            <div class="form-group">
+                <label class="form-label" for="email">Correo Electrónico</label>
+                <div style="position: relative;">
+                    <input type="email" name="email" id="email" required class="form-control" placeholder="juan@correo.com" style="padding-left: 48px;">
+                    <i class="fa-solid fa-envelope" style="position: absolute; left: 18px; top: 50%; transform: translateY(-50%); color: var(--text-secondary);"></i>
+                </div>
+                <div id="email-feedback" class="feedback-text"></div>
+            </div>
+
+            <div class="form-group">
+                <label class="form-label" for="role">Tipo de Usuario (Rol)</label>
+                <div style="position: relative;">
+                    <select name="role" id="role" required class="form-control" style="padding-left: 48px;">
+                        <option value="ASISTENTE">Asistente (Comprar entradas y asistir)</option>
+                        <option value="ORGANIZADOR">Organizador (Crear eventos y vender entradas)</option>
+                    </select>
+                    <i class="fa-solid fa-users" style="position: absolute; left: 18px; top: 50%; transform: translateY(-50%); color: var(--text-secondary);"></i>
+                </div>
+            </div>
+
+            <div class="form-group">
+                <label class="form-label" for="password">Contraseña</label>
+                <div style="position: relative;">
+                    <input type="password" name="password" id="password" required class="form-control" placeholder="Mínimo 6 caracteres" style="padding-left: 48px;">
+                    <i class="fa-solid fa-lock" style="position: absolute; left: 18px; top: 50%; transform: translateY(-50%); color: var(--text-secondary);"></i>
+                </div>
+                <div id="password-feedback" class="feedback-text"></div>
+            </div>
+
+            <div class="form-group" style="margin-bottom: 32px;">
+                <label class="form-label" for="confirm_password">Confirmar Contraseña</label>
+                <div style="position: relative;">
+                    <input type="password" name="confirm_password" id="confirm_password" required class="form-control" placeholder="••••••••" style="padding-left: 48px;">
+                    <i class="fa-solid fa-shield-halved" style="position: absolute; left: 18px; top: 50%; transform: translateY(-50%); color: var(--text-secondary);"></i>
+                </div>
+                <div id="confirm-feedback" class="feedback-text"></div>
+            </div>
+
+            <button type="submit" class="btn btn-primary" style="width: 100%;">
+                <i class="fa-solid fa-user-plus"></i> Crear Cuenta
+            </button>
+        </form>
+
+        <div style="text-align: center; margin-top: 24px; border-top: 1px solid var(--border-color); padding-top: 24px;">
+            <p style="color: var(--text-secondary); font-size: 14px;">
+                ¿Ya tienes una cuenta? <a href="{% url 'login' %}" style="color: var(--accent-orange); font-weight: 600; text-decoration: none;">Inicia sesión aquí</a>
+            </p>
+        </div>
+    </div>
+</div>
+{% endblock %}
+
+{% block extra_js %}
+<script>
+    document.addEventListener("DOMContentLoaded", function() {
+        const username = document.getElementById("username");
+        const email = document.getElementById("email");
+        const password = document.getElementById("password");
+        const confirmPassword = document.getElementById("confirm_password");
+        
+        // Username validation
+        username.addEventListener("input", function() {
+            const feedback = document.getElementById("username-feedback");
+            if(username.value.length < 4) {
+                username.className = "form-control invalid";
+                feedback.className = "feedback-text error";
+                feedback.innerHTML = "<i class='fa-solid fa-xmark-circle'></i> El usuario debe tener al menos 4 caracteres.";
+            } else {
+                username.className = "form-control valid";
+                feedback.className = "feedback-text success";
+                feedback.innerHTML = "<i class='fa-solid fa-check-circle'></i> Nombre de usuario válido.";
+            }
+        });
+
+        // Email validation
+        email.addEventListener("input", function() {
+            const feedback = document.getElementById("email-feedback");
+            const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+            if(!emailRegex.test(email.value)) {
+                email.className = "form-control invalid";
+                feedback.className = "feedback-text error";
+                feedback.innerHTML = "<i class='fa-solid fa-xmark-circle'></i> Correo electrónico inválido.";
+            } else {
+                email.className = "form-control valid";
+                feedback.className = "feedback-text success";
+                feedback.innerHTML = "<i class='fa-solid fa-check-circle'></i> Correo electrónico correcto.";
+            }
+        });
+
+        // Password validation
+        password.addEventListener("input", function() {
+            const feedback = document.getElementById("password-feedback");
+            if(password.value.length < 6) {
+                password.className = "form-control invalid";
+                feedback.className = "feedback-text error";
+                feedback.innerHTML = "<i class='fa-solid fa-xmark-circle'></i> La contraseña debe tener al menos 6 caracteres.";
+            } else {
+                password.className = "form-control valid";
+                feedback.className = "feedback-text success";
+                feedback.innerHTML = "<i class='fa-solid fa-check-circle'></i> Contraseña segura.";
+            }
+            validateConfirm();
+        });
+
+        // Confirm Password validation
+        confirmPassword.addEventListener("input", validateConfirm);
+
+        function validateConfirm() {
+            const feedback = document.getElementById("confirm-feedback");
+            if(confirmPassword.value !== password.value || confirmPassword.value === "") {
+                confirmPassword.className = "form-control invalid";
+                feedback.className = "feedback-text error";
+                feedback.innerHTML = "<i class='fa-solid fa-xmark-circle'></i> Las contraseñas no coinciden.";
+            } else {
+                confirmPassword.className = "form-control valid";
+                feedback.className = "feedback-text success";
+                feedback.innerHTML = "<i class='fa-solid fa-check-circle'></i> Las contraseñas coinciden.";
+            }
+        }
+    });
+</script>
+{% endblock %}
