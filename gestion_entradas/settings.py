@@ -10,6 +10,7 @@ For the full list of settings and their values, see
 https://docs.djangoproject.com/en/5.2/ref/settings/
 """
 
+import os
 from pathlib import Path
 
 # Build paths inside the project like this: BASE_DIR / 'subdir'.
@@ -20,12 +21,41 @@ BASE_DIR = Path(__file__).resolve().parent.parent
 # See https://docs.djangoproject.com/en/5.2/howto/deployment/checklist/
 
 # SECURITY WARNING: keep the secret key used in production secret!
-SECRET_KEY = 'django-insecure-6qdxe!1xu$5gk^6*v(-_&e1b7@%h&_ykcz3c(mne%xkfq-y8ac'
+SECRET_KEY = os.environ.get(
+    'SECRET_KEY',
+    'django-insecure-6qdxe!1xu$5gk^6*v(-_&e1b7@%h&_ykcz3c(mne%xkfq-y8ac',
+)
 
 # SECURITY WARNING: don't run with debug turned on in production!
-DEBUG = True
+DEBUG = os.environ.get('DEBUG', 'True').lower() in ('true', '1', 'yes')
 
-ALLOWED_HOSTS = []
+ALLOWED_HOSTS = [
+    host.strip()
+    for host in os.environ.get('ALLOWED_HOSTS', 'localhost,127.0.0.1,.vercel.app').split(',')
+    if host.strip()
+]
+
+# Vercel inyecta estos dominios en cada despliegue (preview y producción).
+for _vercel_env in ('VERCEL_URL', 'VERCEL_BRANCH_URL', 'VERCEL_PROJECT_PRODUCTION_URL'):
+    _vercel_host = os.environ.get(_vercel_env)
+    if _vercel_host and _vercel_host not in ALLOWED_HOSTS:
+        ALLOWED_HOSTS.append(_vercel_host)
+
+CSRF_TRUSTED_ORIGINS = [
+    origin.strip()
+    for origin in os.environ.get('CSRF_TRUSTED_ORIGINS', '').split(',')
+    if origin.strip()
+]
+for _vercel_env in ('VERCEL_URL', 'VERCEL_BRANCH_URL', 'VERCEL_PROJECT_PRODUCTION_URL'):
+    _vercel_host = os.environ.get(_vercel_env)
+    if _vercel_host:
+        _origin = f'https://{_vercel_host}'
+        if _origin not in CSRF_TRUSTED_ORIGINS:
+            CSRF_TRUSTED_ORIGINS.append(_origin)
+
+# Detrás del proxy de Vercel (HTTPS)
+SECURE_PROXY_SSL_HEADER = ('HTTP_X_FORWARDED_PROTO', 'https')
+USE_X_FORWARDED_HOST = True
 
 
 # Application definition
