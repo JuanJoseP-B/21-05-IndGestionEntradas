@@ -1,0 +1,234 @@
+{% extends 'base.html' %}
+
+{% block title %}Dashboard Organizador - PASSORANGE{% endblock %}
+
+{% block content %}
+<div class="hero-banner" style="padding: 40px 0; text-align: left;">
+    <h1 class="hero-title" style="font-size: 36px;">Panel de <span>Administración</span></h1>
+    <p class="hero-subtitle" style="margin: 0; font-size: 16px;">Administra tus recintos, publica nuevos eventos y analiza el reporte de tus ventas en tiempo real.</p>
+</div>
+
+<!-- Stats row -->
+<div class="dashboard-stats">
+    <div class="stat-card">
+        <div class="stat-value">{{ events_count }}</div>
+        <div class="stat-label">Eventos Propios</div>
+    </div>
+    <div class="stat-card">
+        <div class="stat-value">{{ tickets_sold }}</div>
+        <div class="stat-label">Entradas Vendidas</div>
+    </div>
+    <div class="stat-card">
+        <div class="stat-value" style="color: var(--success);">${{ revenue }} COP</div>
+        <div class="stat-label">Ingresos Totales</div>
+    </div>
+</div>
+
+<div class="dashboard-grid">
+    <!-- Sidebar navigation -->
+    <div class="sidebar">
+        <ul class="sidebar-menu">
+            <li class="sidebar-item active" id="tab-events">
+                <a href="javascript:void(0);" onclick="switchTab('events')">
+                    <i class="fa-solid fa-calendar-days"></i> Mis Eventos
+                </a>
+            </li>
+            <li class="sidebar-item" id="tab-create-event">
+                <a href="javascript:void(0);" onclick="switchTab('create-event')">
+                    <i class="fa-solid fa-calendar-plus"></i> Crear Evento
+                </a>
+            </li>
+            <li class="sidebar-item" id="tab-create-location">
+                <a href="javascript:void(0);" onclick="switchTab('create-location')">
+                    <i class="fa-solid fa-map-location-dot"></i> Registrar Ubicación
+                </a>
+            </li>
+            <li class="sidebar-item" id="tab-validate">
+                <a href="javascript:void(0);" onclick="switchTab('validate')">
+                    <i class="fa-solid fa-qrcode"></i> Validar Entrada (QR)
+                </a>
+            </li>
+        </ul>
+    </div>
+
+    <!-- Content panels -->
+    <div class="dashboard-content">
+        
+        <!-- Tab: Events List -->
+        <div id="panel-events" class="tab-panel">
+            <h2 style="font-size: 22px; margin-bottom: 24px; font-weight: 700;">Mis Eventos Programados</h2>
+            {% if events %}
+                <div style="overflow-x: auto; background: var(--bg-secondary); border: 1px solid var(--border-color); border-radius: var(--border-radius-md);">
+                    <table style="width: 100%; border-collapse: collapse; text-align: left; font-size: 15px;">
+                        <thead>
+                            <tr style="border-bottom: 1px solid var(--border-color); background: rgba(255,255,255,0.02);">
+                                <th style="padding: 18px 24px; color: var(--accent-orange);">Título</th>
+                                <th style="padding: 18px 24px;">Fecha / Hora</th>
+                                <th style="padding: 18px 24px;">Ubicación</th>
+                                <th style="padding: 18px 24px;">Entradas</th>
+                                <th style="padding: 18px 24px;">Reportes</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            {% for event in events %}
+                                <tr style="border-bottom: 1px solid var(--border-color); transition: var(--transition-smooth);" onmouseover="this.style.background='rgba(255,255,255,0.01)'" onmouseout="this.style.background='transparent'">
+                                    <td style="padding: 18px 24px; font-weight: 600;">{{ event.title }}</td>
+                                    <td style="padding: 18px 24px;">{{ event.date }} - {{ event.time }}</td>
+                                    <td style="padding: 18px 24px;">{{ event.location.name }}</td>
+                                    <td style="padding: 18px 24px;">
+                                        <span class="user-badge" style="display: inline-block;">{{ event.tickets.count }} vendidas</span>
+                                    </td>
+                                    <td style="padding: 18px 24px; display: flex; gap: 8px;">
+                                        <a href="{% url 'download_report' event.id 'excel' %}" class="btn btn-secondary" style="padding: 6px 12px; font-size: 13px;">
+                                            <i class="fa-solid fa-file-excel" style="color: #10b981;"></i> Excel
+                                        </a>
+                                        <a href="{% url 'download_report' event.id 'csv' %}" class="btn btn-secondary" style="padding: 6px 12px; font-size: 13px;">
+                                            <i class="fa-solid fa-file-csv" style="color: #3b82f6;"></i> CSV
+                                        </a>
+                                    </td>
+                                </tr>
+                            {% endfor %}
+                        </tbody>
+                    </table>
+                </div>
+            {% else %}
+                <div class="glass-card" style="text-align: center; padding: 48px;">
+                    <i class="fa-solid fa-calendar-times" style="font-size: 40px; color: var(--text-muted); margin-bottom: 16px;"></i>
+                    <p style="color: var(--text-secondary);">Aún no has creado ningún evento. ¡Empieza creando uno nuevo!</p>
+                </div>
+            {% endif %}
+        </div>
+
+        <!-- Tab: Create Event -->
+        <div id="panel-create-event" class="tab-panel" style="display: none;">
+            <h2 style="font-size: 22px; margin-bottom: 24px; font-weight: 700;">Publicar un Nuevo Evento</h2>
+            <div class="glass-card" style="padding: 32px;">
+                <form action="{% url 'create_event' %}" method="post">
+                    {% csrf_token %}
+                    <div class="form-group">
+                        <label class="form-label" for="event-title">Título del Evento</label>
+                        <input type="text" name="title" id="event-title" required class="form-control" placeholder="Ej: Concierto de Rock Naranja">
+                    </div>
+                    
+                    <div class="form-group">
+                        <label class="form-label" for="event-desc">Descripción Completa</label>
+                        <textarea name="description" id="event-desc" required class="form-control" rows="4" placeholder="Detalla el itinerario del evento..."></textarea>
+                    </div>
+
+                    <div style="display: flex; gap: 16px; flex-wrap: wrap;">
+                        <div class="form-group" style="flex: 1; min-width: 200px;">
+                            <label class="form-label" for="event-date">Fecha del Evento</label>
+                            <input type="date" name="date" id="event-date" required class="form-control">
+                        </div>
+                        <div class="form-group" style="flex: 1; min-width: 200px;">
+                            <label class="form-label" for="event-time">Hora de Inicio</label>
+                            <input type="time" name="time" id="event-time" required class="form-control">
+                        </div>
+                    </div>
+
+                    <div class="form-group">
+                        <label class="form-label" for="event-location">Ubicación / Recinto</label>
+                        <select name="location" id="event-location" required class="form-control">
+                            {% for loc in locations %}
+                                <option value="{{ loc.id }}">{{ loc.name }} (Capacidad: {{ loc.capacity }} personas)</option>
+                            {% empty %}
+                                <option value="" disabled>Primero registra una ubicación en la pestaña correspondiente</option>
+                            {% endfor %}
+                        </select>
+                    </div>
+
+                    <div class="form-group">
+                        <label class="form-label" for="event-status">Estado de Publicación</label>
+                        <select name="status" id="event-status" required class="form-control">
+                            <option value="BORRADOR">Borrador</option>
+                            <option value="PUBLICADO" selected>Publicar Inmediatamente</option>
+                        </select>
+                    </div>
+
+                    <button type="submit" class="btn btn-primary">
+                        <i class="fa-solid fa-circle-check"></i> Registrar Evento
+                    </button>
+                </form>
+            </div>
+        </div>
+
+        <!-- Tab: Create Location -->
+        <div id="panel-create-location" class="tab-panel" style="display: none;">
+            <h2 style="font-size: 22px; margin-bottom: 24px; font-weight: 700;">Registrar un Recinto o Ubicación</h2>
+            <div class="glass-card" style="padding: 32px;">
+                <form action="{% url 'create_location' %}" method="post">
+                    {% csrf_token %}
+                    <div class="form-group">
+                        <label class="form-label" for="loc-name">Nombre del Recinto</label>
+                        <input type="text" name="name" id="loc-name" required class="form-control" placeholder="Ej: Teatro Metropolitano">
+                    </div>
+                    
+                    <div class="form-group">
+                        <label class="form-label" for="loc-capacity">Capacidad de Aforo Máximo</label>
+                        <input type="number" name="capacity" id="loc-capacity" required min="1" class="form-control" placeholder="Ej: 500">
+                    </div>
+
+                    <div class="form-group">
+                        <label class="form-label" for="loc-address">Dirección</label>
+                        <input type="text" name="address" id="loc-address" required class="form-control" placeholder="Calle 45 # 12 - 34">
+                    </div>
+
+                    <div class="form-group" style="margin-bottom: 32px;">
+                        <label class="form-label" for="loc-city">Ciudad</label>
+                        <input type="text" name="city" id="loc-city" required class="form-control" placeholder="Medellín">
+                    </div>
+
+                    <button type="submit" class="btn btn-primary">
+                        <i class="fa-solid fa-map-pin"></i> Guardar Recinto
+                    </button>
+                </form>
+            </div>
+        </div>
+
+        <!-- Tab: Validate QR Ticket -->
+        <div id="panel-validate" class="tab-panel" style="display: none;">
+            <h2 style="font-size: 22px; margin-bottom: 24px; font-weight: 700;">Validar Entrada en Puerta</h2>
+            <div class="glass-card" style="padding: 32px;">
+                <p style="color: var(--text-secondary); margin-bottom: 24px;">Ingresa el código identificador UUID único de la entrada o simula el escaneo del código QR para verificar la validez y registrar el acceso.</p>
+                <form action="{% url 'validate_ticket' %}" method="post">
+                    {% csrf_token %}
+                    <div class="form-group" style="margin-bottom: 32px;">
+                        <label class="form-label" for="ticket-uuid">Código de Ticket (UUID)</label>
+                        <input type="text" name="uuid_code" id="ticket-uuid" required class="form-control" placeholder="e.g. f81d4fae-7dec-11d0-a765-00a0c91e6bf6">
+                    </div>
+                    
+                    <button type="submit" class="btn btn-primary">
+                        <i class="fa-solid fa-shield-check"></i> Validar e Ingresar
+                    </button>
+                </form>
+            </div>
+        </div>
+
+    </div>
+</div>
+{% endblock %}
+
+{% block extra_js %}
+<script>
+    function switchTab(tabId) {
+        // Toggle tab menu classes
+        document.querySelectorAll('.sidebar-item').forEach(item => {
+            item.classList.remove('active');
+        });
+        document.getElementById('tab-' + tabId).classList.add('active');
+
+        // Toggle panel displays
+        document.querySelectorAll('.tab-panel').forEach(panel => {
+            panel.style.display = 'none';
+        });
+        document.getElementById('panel-' + tabId).style.display = 'block';
+    }
+    
+    // Auto highlight active fields
+    document.querySelectorAll('.form-control').forEach(input => {
+        input.addEventListener('focus', () => {
+            input.style.borderColor = 'var(--accent-orange)';
+        });
+    });
+</script>
+{% endblock %}

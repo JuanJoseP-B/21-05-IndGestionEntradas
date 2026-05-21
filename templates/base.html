@@ -1,0 +1,84 @@
+{% load static %}
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>{% block title %}Gestión de Eventos y Entradas{% endblock %}</title>
+    <!-- FontAwesome for Premium Icons -->
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <!-- Custom CSS Style -->
+    <link rel="stylesheet" href="{% static 'css/styles.css' %}">
+    {% block extra_head %}{% endblock %}
+</head>
+<body>
+
+    <header>
+        <div class="container">
+            <nav>
+                <a href="{% url 'billboard' %}" class="logo">
+                    <i class="fa-solid fa-ticket"></i> PASS<span>ORANGE</span>
+                </a>
+                <ul class="nav-links">
+                    <li class="{% if request.resolver_match.url_name == 'billboard' %}active{% endif %}">
+                        <a href="{% url 'billboard' %}"><i class="fa-solid fa-compass"></i> Cartelera</a>
+                    </li>
+                    {% if user.is_authenticated %}
+                        {% if user.role == 'ORGANIZADOR' or user.role == 'ADMINISTRADOR' %}
+                            <li class="{% if 'dashboard' in request.path %}active{% endif %}">
+                                <a href="{% url 'dashboard' %}"><i class="fa-solid fa-chart-line"></i> Dashboard</a>
+                            </li>
+                        {% endif %}
+                        <li class="user-badge">
+                            <i class="fa-solid fa-user-circle"></i> {{ user.username }} ({{ user.get_role_display }})
+                        </li>
+                        <li>
+                            <form action="{% url 'logout' %}" method="post" style="display: inline;">
+                                {% csrf_token %}
+                                <button type="submit" class="btn btn-secondary" style="padding: 8px 16px; font-size: 13px;">
+                                    <i class="fa-solid fa-sign-out-alt"></i> Salir
+                                </button>
+                            </form>
+                        </li>
+                    {% else %}
+                        <li class="{% if request.resolver_match.url_name == 'login' %}active{% endif %}">
+                            <a href="{% url 'login' %}"><i class="fa-solid fa-sign-in-alt"></i> Ingresar</a>
+                        </li>
+                        <li>
+                            <a href="{% url 'register' %}" class="btn btn-primary">
+                                <i class="fa-solid fa-user-plus"></i> Registrarse
+                            </a>
+                        </li>
+                    {% endif %}
+                </ul>
+            </nav>
+        </div>
+    </header>
+
+    <main style="flex: 1; padding: 40px 0;">
+        <div class="container">
+            {% if messages %}
+                <div class="messages" style="margin-bottom: 30px; display: flex; flex-direction: column; gap: 12px;">
+                    {% for message in messages %}
+                        <div class="glass-card" style="padding: 16px 24px; border-left: 5px solid {% if message.tags == 'error' %}var(--error){% elif message.tags == 'success' %}var(--success){% else %}var(--accent-orange){% endif %}; margin: 0; display: flex; align-items: center; gap: 16px;">
+                            <i class="{% if message.tags == 'error' %}fa-solid fa-circle-exclamation{% elif message.tags == 'success' %}fa-solid fa-circle-check{% else %}fa-solid fa-info-circle{% endif %}" style="color: {% if message.tags == 'error' %}var(--error){% elif message.tags == 'success' %}var(--success){% else %}var(--accent-orange){% endif %}; font-size: 20px;"></i>
+                            <div style="font-weight: 500;">{{ message }}</div>
+                        </div>
+                    {% endfor %}
+                </div>
+            {% endif %}
+
+            {% block content %}{% endblock %}
+        </div>
+    </main>
+
+    <footer>
+        <div class="container">
+            <p>&copy; 2026 PASSORANGE. Todos los derechos reservados.</p>
+            <p style="margin-top: 8px; font-size: 12px;">Desarrollado con <i class="fa-solid fa-heart" style="color: var(--accent-orange);"></i> utilizando Django & Vanilla CSS.</p>
+        </div>
+    </footer>
+
+    {% block extra_js %}{% endblock %}
+</body>
+</html>
