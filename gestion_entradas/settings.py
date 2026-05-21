@@ -29,23 +29,30 @@ SECRET_KEY = os.environ.get(
 # SECURITY WARNING: don't run with debug turned on in production!
 DEBUG = os.environ.get('DEBUG', 'True').lower() in ('true', '1', 'yes')
 
-ALLOWED_HOSTS = [
-    host.strip()
-    for host in os.environ.get('ALLOWED_HOSTS', 'localhost,127.0.0.1,.vercel.app').split(',')
-    if host.strip()
-]
 
-# Vercel inyecta estos dominios en cada despliegue (preview y producción).
+def _csv_env(name):
+    """Lista desde variable CSV; ignora vacíos (evita ALLOWED_HOSTS=[] en Vercel)."""
+    raw = os.environ.get(name)
+    if raw is None or not str(raw).strip():
+        return []
+    return [item.strip() for item in raw.split(',') if item.strip()]
+
+
+_DEFAULT_ALLOWED_HOSTS = ['localhost', '127.0.0.1', '.vercel.app']
+_allowed_from_env = _csv_env('ALLOWED_HOSTS')
+ALLOWED_HOSTS = _allowed_from_env if _allowed_from_env else list(_DEFAULT_ALLOWED_HOSTS)
+
+# En Vercel siempre permitir subdominios *.vercel.app (preview y producción).
+if os.environ.get('VERCEL') or os.environ.get('VERCEL_URL'):
+    if '.vercel.app' not in ALLOWED_HOSTS:
+        ALLOWED_HOSTS.append('.vercel.app')
+
 for _vercel_env in ('VERCEL_URL', 'VERCEL_BRANCH_URL', 'VERCEL_PROJECT_PRODUCTION_URL'):
     _vercel_host = os.environ.get(_vercel_env)
     if _vercel_host and _vercel_host not in ALLOWED_HOSTS:
         ALLOWED_HOSTS.append(_vercel_host)
 
-CSRF_TRUSTED_ORIGINS = [
-    origin.strip()
-    for origin in os.environ.get('CSRF_TRUSTED_ORIGINS', '').split(',')
-    if origin.strip()
-]
+CSRF_TRUSTED_ORIGINS = _csv_env('CSRF_TRUSTED_ORIGINS')
 for _vercel_env in ('VERCEL_URL', 'VERCEL_BRANCH_URL', 'VERCEL_PROJECT_PRODUCTION_URL'):
     _vercel_host = os.environ.get(_vercel_env)
     if _vercel_host:
@@ -109,12 +116,25 @@ WSGI_APPLICATION = 'gestion_entradas.wsgi.application'
 # Database
 # https://docs.djangoproject.com/en/5.2/ref/settings/#databases
 
-DATABASES = {
-    'default': {
-        'ENGINE': 'django.db.backends.sqlite3',
-        'NAME': BASE_DIR / 'db.sqlite3',
+DATABASE_URL = os.environ.get('DATABASE_URL')
+
+if DATABASE_URL:
+    import dj_database_url
+
+    DATABASES = {
+        'default': dj_database_url.config(
+            default=DATABASE_URL,
+            conn_max_age=600,
+            ssl_require=True,
+        )
     }
-}
+else:
+    DATABASES = {
+        'default': {
+            'ENGINE': 'django.db.backends.sqlite3',
+            'NAME': BASE_DIR / 'db.sqlite3',
+        }
+    }
 
 
 # Password validation
